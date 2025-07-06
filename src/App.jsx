@@ -27,7 +27,7 @@ function App() {
         const formData = new FormData();
         formData.append('file', file);
         try {
-          const response = await fetch('http://localhost:3001/extract', {
+          const response = await fetch('/api/extract', {
             method: 'POST',
             body: formData,
           });
@@ -49,7 +49,7 @@ function App() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const response = await fetch('http://localhost:3001/analyze', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
         body: formData,
       });
