@@ -4,7 +4,9 @@ import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-import 'pdfjs-dist/build/pdf.worker.entry';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.js?worker';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
