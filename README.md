@@ -1,5 +1,24 @@
 # AI Assignment Vulnerability Analyzer
 
+## Deployment: Render (Backend) + Vercel (Frontend)
+
+### Backend (Render)
+1. Deploy the `backend/` folder as a Node.js web service on [Render](https://render.com/).
+2. Set the environment variable `GEMINI_API_KEY` in Render.
+3. The backend will be available at `https://your-backend.onrender.com` (or similar).
+
+### Frontend (Vercel)
+1. Deploy the root project (React/Vite) to [Vercel](https://vercel.com/).
+2. Set the environment variable `VITE_API_BASE_URL` to your Render backend URL (e.g., `https://your-backend.onrender.com`).
+3. All API calls will be routed to your backend.
+
+### Local Development
+- Start the backend: `cd backend && npm install && npm start`
+- Start the frontend: `npm install && npm run dev`
+- By default, the frontend will use `http://localhost:8080` for API calls.
+
+---
+
 A React application that analyzes assignment prompts for AI vulnerability using Google's Gemini API. The app helps educators assess how easily their assignments can be solved by AI tools and provides actionable feedback to make assignments more authentic and AI-resistant.
 
 ## Features

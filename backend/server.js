@@ -11,20 +11,6 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-async function extractPdfText(filePath) {
-  // Dynamic import to avoid module resolution issues
-  const pdfjsLib = await import('pdfjs-dist');
-  const data = new Uint8Array(fs.readFileSync(filePath));
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
-  let text = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-    text += content.items.map(item => item.str).join(' ') + '\n';
-  }
-  return text;
-}
-
 // /api/extract endpoint
 app.post('/api/extract', (req, res) => {
   const form = new formidable.IncomingForm();
@@ -37,7 +23,7 @@ app.post('/api/extract', (req, res) => {
     if (ext === 'txt') {
       assignmentText = fs.readFileSync(file.filepath, 'utf-8');
     } else if (ext === 'pdf') {
-      assignmentText = await extractPdfText(file.filepath);
+      assignmentText = '(PDF extraction not supported on server. Please convert to text first.)';
     } else if (ext === 'docx') {
       const dataBuffer = fs.readFileSync(file.filepath);
       const result = await mammoth.extractRawText({ buffer: dataBuffer });
@@ -61,7 +47,7 @@ app.post('/api/analyze', (req, res) => {
       if (ext === 'txt') {
         assignmentText = fs.readFileSync(file.filepath, 'utf-8');
       } else if (ext === 'pdf') {
-        assignmentText = await extractPdfText(file.filepath);
+        assignmentText = '(PDF extraction not supported on server. Please convert to text first.)';
       } else if (ext === 'docx') {
         const dataBuffer = fs.readFileSync(file.filepath);
         const result = await mammoth.extractRawText({ buffer: dataBuffer });

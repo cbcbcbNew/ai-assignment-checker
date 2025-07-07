@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import API_BASE from './apiBase';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
 
@@ -24,29 +25,26 @@ function App() {
         reader.readAsText(file);
       });
     } else if (ext === 'pdf') {
-      // Use pdfjs-dist to extract text from PDF
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const typedarray = new Uint8Array(e.target.result);
-            const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
-            let text = '';
-            for (let i = 1; i <= pdf.numPages; i++) {
-              const page = await pdf.getPage(i);
-              const content = await page.getTextContent();
-              text += content.items.map(item => item.str).join(' ') + '\n';
-            }
-            resolve(text);
-          } catch (err) {
-            reject('(Error extracting PDF text)');
-          }
-        };
-        reader.readAsArrayBuffer(file);
-      });
+      // Client-side PDF extraction
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        text += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      return text;
     } else if (ext === 'docx') {
-      // DOCX extraction in browser is complex; show a message
-      return Promise.resolve('(DOCX preview not supported in browser. Please convert to .txt or .pdf for best results.)');
+      // Upload to backend for DOCX extraction
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(`${API_BASE}/api/extract`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      return data.text || '(No text extracted)';
     } else {
       return Promise.resolve('(Unsupported file type)');
     }
@@ -72,7 +70,7 @@ function App() {
     if (!file) return;
     try {
       const extractedText = await extractTextFromFile(file);
-      const response = await fetch('/api/analyze', {
+      const response = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
