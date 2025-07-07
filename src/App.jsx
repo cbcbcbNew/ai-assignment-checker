@@ -11,33 +11,47 @@ function App() {
   const [loading, setLoading] = useState(false);
   const analysisRef = useRef();
 
+  const extractTextFromFile = async (file) => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    if (ext === 'txt') {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsText(file);
+      });
+    } else if (ext === 'pdf') {
+      // For PDF, we'll use a simple text extraction
+      // In a production app, you might want to use a more robust PDF parser
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          // Simple text extraction - for better results, consider using pdf.js
+          const text = e.target.result.replace(/[^\x00-\x7F]/g, '').replace(/\s+/g, ' ');
+          resolve(text);
+        };
+        reader.readAsText(file);
+      });
+    } else if (ext === 'docx') {
+      // For DOCX, we'll return a placeholder
+      // In a production app, you'd want to use a proper DOCX parser
+      return Promise.resolve('(DOCX file content - please convert to text for better analysis)');
+    } else {
+      return Promise.resolve('(Unsupported file type)');
+    }
+  };
+
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedFile(file);
-      const ext = file.name.split('.').pop().toLowerCase();
-      if (ext === 'txt') {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setPreviewText(e.target.result);
-        };
-        reader.readAsText(file);
-      } else if (ext === 'pdf' || ext === 'docx') {
-        setPreviewText('(Extracting text for preview...)');
-        const formData = new FormData();
-        formData.append('file', file);
-        try {
-          const response = await fetch('/api/extract', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await response.json();
-          setPreviewText(data.text || '(No text extracted)');
-        } catch (err) {
-          setPreviewText('(Error extracting text)');
-        }
-      } else {
-        setPreviewText('(Preview not available for this file type)');
+      setPreviewText('(Extracting text for preview...)');
+      
+      try {
+        const extractedText = await extractTextFromFile(file);
+        setPreviewText(extractedText);
+      } catch (err) {
+        setPreviewText('(Error extracting text)');
       }
     }
   };
@@ -45,14 +59,20 @@ function App() {
   const handleAnalyze = async (file) => {
     setLoading(true);
     setAnalysisResult("");
+    
     if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
+    
     try {
+      const extractedText = await extractTextFromFile(file);
+      
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: extractedText }),
       });
+      
       const data = await response.json();
       setAnalysisResult(data.result || "⚠️ No result returned");
     } catch (err) {
