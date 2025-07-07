@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 
-// /api/extract endpoint
+// /api/extract endpoint (still supports file upload for .txt)
 app.post('/api/extract', (req, res) => {
   formidable().parse(req, async (err, fields, files) => {
     if (err) return res.status(500).json({ text: '(Error parsing file)' });
@@ -27,41 +27,28 @@ app.post('/api/extract', (req, res) => {
   });
 });
 
-// /api/analyze endpoint
-app.post('/api/analyze', (req, res) => {
-  formidable().parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ result: 'Error parsing file' });
-    let assignmentText = '';
-    if (files.file) {
-      const file = files.file;
-      const ext = file.originalFilename.split('.').pop().toLowerCase();
-      if (ext === 'txt') {
-        assignmentText = fs.readFileSync(file.filepath, 'utf-8');
-      } else {
-        assignmentText = '(Unsupported file type. Only .txt files are supported in this version.)';
-      }
-    } else if (fields.text) {
-      assignmentText = fields.text;
-    } else {
-      return res.status(400).json({ result: 'No file or text provided' });
-    }
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-    const prompt = `Analyze this assignment for AI vulnerability. Rate risk (Low/Medium/High/Critical), identify specific weaknesses, and provide 3 actionable improvements to make it AI-resistant:\n\n${assignmentText}`;
-    try {
-      const result = await model.generateContent({
-        contents: [{
-          role: "user",
-          parts: [{ text: prompt }]
-        }]
-      });
-      const response = result.response;
-      const generatedText = response.text();
-      res.json({ result: generatedText });
-    } catch (error) {
-      res.status(500).json({ result: 'AI analysis failed: ' + error.message });
-    }
-  });
+// /api/analyze endpoint (accepts only JSON)
+app.post('/api/analyze', async (req, res) => {
+  const assignmentText = req.body.text;
+  if (!assignmentText) {
+    return res.status(400).json({ result: 'No text provided' });
+  }
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
+  const prompt = `Analyze this assignment for AI vulnerability. Rate risk (Low/Medium/High/Critical), identify specific weaknesses, and provide 3 actionable improvements to make it AI-resistant:\n\n${assignmentText}`;
+  try {
+    const result = await model.generateContent({
+      contents: [{
+        role: "user",
+        parts: [{ text: prompt }]
+      }]
+    });
+    const response = result.response;
+    const generatedText = response.text();
+    res.json({ result: generatedText });
+  } catch (error) {
+    res.status(500).json({ result: 'AI analysis failed: ' + error.message });
+  }
 });
 
 app.get('/', (req, res) => {
