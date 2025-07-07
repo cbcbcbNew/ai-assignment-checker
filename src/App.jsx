@@ -3,10 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import * as pdfjsLib from 'pdfjs-dist/build/pdf';
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 import API_BASE from './apiBase';
-
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -15,7 +12,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const analysisRef = useRef();
 
-  // Extract text from file, all client-side
+  // Extract text from file, only .txt supported
   const extractTextFromFile = async (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
     if (ext === 'txt') {
@@ -24,29 +21,8 @@ function App() {
         reader.onload = (e) => resolve(e.target.result);
         reader.readAsText(file);
       });
-    } else if (ext === 'pdf') {
-      // Client-side PDF extraction
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      let text = '';
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const page = await pdf.getPage(i);
-        const content = await page.getTextContent();
-        text += content.items.map(item => item.str).join(' ') + '\n';
-      }
-      return text;
-    } else if (ext === 'docx') {
-      // Upload to backend for DOCX extraction
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch(`${API_BASE}/api/extract`, {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-      return data.text || '(No text extracted)';
     } else {
-      return Promise.resolve('(Unsupported file type)');
+      return Promise.resolve('(Unsupported file type. Only .txt files are supported in this version.)');
     }
   };
 
@@ -59,7 +35,6 @@ function App() {
         const extractedText = await extractTextFromFile(file);
         setPreviewText(extractedText);
       } catch (err) {
-        console.error('PDF extraction error:', err); // Log extraction errors
         setPreviewText('(Error extracting text)');
       }
     }
@@ -203,129 +178,93 @@ function App() {
         alignItems: 'stretch',
       }}>
         <label style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: 8 }}>
-          Upload Assignment Prompt (.txt, .pdf, .docx)
+          Upload Assignment Prompt (.txt only)
         </label>
         <span style={{ fontSize: '0.98rem', color: '#a5b4fc', marginBottom: 16 }}>
-          Supported file types: <b>.txt</b>, <b>.pdf</b>, <b>.docx</b>. After analysis, you can export the annotated result as a PDF.
+          Supported file type: <b>.txt</b> only. PDF and DOCX support coming soon!
         </span>
         <input
           type="file"
+          accept=".txt"
           onChange={handleFileChange}
-          accept=".txt,.pdf,.docx"
-          style={{
-            marginBottom: '1.5rem',
-            padding: '0.5rem',
-            borderRadius: '6px',
-            border: '1px solid #444',
-            background: '#23272f',
-            color: '#f3f4f6',
-            fontSize: '1rem',
-          }}
+          style={{ marginBottom: 18 }}
         />
-        {selectedFile && (
-          <button
-            onClick={() => handleAnalyze(selectedFile)}
-            disabled={loading}
-            style={{
-              background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
-              color: '#fff',
-              border: 'none',
-              padding: '0.75rem 1.5rem',
-              borderRadius: '8px',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              marginBottom: '1.5rem',
-              boxShadow: '0 2px 8px 0 rgba(99,102,241,0.10)',
-              transition: 'background 0.2s',
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? 'Analyzing...' : '🔍 Analyze'}
-          </button>
-        )}
-        {previewText && (
-          <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 6, color: '#a5b4fc' }}>📄 Assignment Preview</h2>
-            <pre style={{
-              background: '#18181b',
-              padding: '1rem',
-              borderRadius: '8px',
-              whiteSpace: 'pre-wrap',
-              fontSize: '1rem',
-              color: '#e0e7ef',
-              maxHeight: 600,
-              overflowY: 'auto',
-              border: '1px solid #23272f',
-            }}>{previewText}</pre>
+        <button
+          onClick={() => handleAnalyze(selectedFile)}
+          disabled={!selectedFile || loading}
+          style={{
+            background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '1.15rem',
+            border: 'none',
+            borderRadius: 8,
+            padding: '0.9rem 0',
+            marginBottom: 24,
+            cursor: selectedFile && !loading ? 'pointer' : 'not-allowed',
+            opacity: selectedFile && !loading ? 1 : 0.6,
+            transition: 'opacity 0.2s',
+          }}
+        >
+          {loading ? 'Analyzing...' : '🔍 Analyze'}
+        </button>
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>
+            📝 Assignment Preview
+          </h3>
+          <div style={{
+            background: '#18181b',
+            borderRadius: 8,
+            padding: '1rem',
+            minHeight: 80,
+            color: '#a5b4fc',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: '1.01rem',
+            whiteSpace: 'pre-wrap',
+            marginBottom: 0,
+          }}>
+            {previewText}
           </div>
-        )}
-        {analysisResult && (
-          <div style={{ marginTop: '1.5rem' }}>
-            <h2 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 6, color: '#a5b4fc' }}>🧠 AI Vulnerability Analysis</h2>
-            <div ref={analysisRef} style={{
-              background: 'linear-gradient(135deg, #23272f 0%, #3730a3 100%)',
-              padding: '1.5rem',
-              borderRadius: '10px',
-              color: '#e0e7ef',
-              fontFamily: 'Menlo, monospace',
-              fontSize: '1rem',
-              lineHeight: 1.7,
-              border: '1px solid #3730a3',
-              boxShadow: '0 2px 12px 0 rgba(36,37,46,0.10)',
-              maxHeight: 350,
-              overflowY: 'auto',
-              marginBottom: '0.5rem',
-            }}>
-              <ReactMarkdown
-                children={analysisResult}
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  h1: ({node, ...props}) => <h1 style={{color:'#a5b4fc', fontSize:'1.3rem', fontWeight:700, margin:'1rem 0 0.5rem'}} {...props} />,
-                  h2: ({node, ...props}) => <h2 style={{color:'#a5b4fc', fontSize:'1.15rem', fontWeight:600, margin:'1rem 0 0.5rem'}} {...props} />,
-                  strong: ({node, ...props}) => <strong style={{color:'#facc15'}} {...props} />,
-                  li: ({node, ...props}) => <li style={{marginBottom:4}} {...props} />,
-                  blockquote: ({node, ...props}) => <blockquote style={{borderLeft:'3px solid #818cf8', paddingLeft:10, color:'#a5b4fc', margin:'0.5rem 0'}} {...props} />,
-                  code: ({node, ...props}) => <code style={{background:'#23272f', color:'#facc15', borderRadius:4, padding:'2px 6px'}} {...props} />,
-                  p: ({node, ...props}) => <p style={{margin:'0.5rem 0'}} {...props} />,
-                }}
-              />
-            </div>
-            <button
-              onClick={handleExportPDF}
-              style={{
-                background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
-                color: '#fff',
-                border: 'none',
-                padding: '0.6rem 1.2rem',
-                borderRadius: '7px',
-                fontWeight: 600,
-                fontSize: '1rem',
-                cursor: 'pointer',
-                marginTop: '0.5rem',
-                boxShadow: '0 2px 8px 0 rgba(99,102,241,0.10)',
-                transition: 'background 0.2s',
-              }}
-            >
-              ⬇️ Export Annotated PDF
-            </button>
+        </div>
+        <div style={{ marginBottom: 24 }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>
+            🧠 AI Vulnerability Analysis
+          </h3>
+          <div style={{
+            background: 'linear-gradient(90deg, #23272f 0%, #18181b 100%)',
+            borderRadius: 8,
+            padding: '1rem',
+            minHeight: 80,
+            color: '#f3f4f6',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: '1.01rem',
+            whiteSpace: 'pre-wrap',
+            marginBottom: 0,
+          }}>
+            {analysisResult}
           </div>
-        )}
+        </div>
+        <button
+          onClick={handleExportPDF}
+          disabled={!analysisResult}
+          style={{
+            background: 'linear-gradient(90deg, #818cf8 0%, #6366f1 100%)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: '1.05rem',
+            border: 'none',
+            borderRadius: 8,
+            padding: '0.7rem 0',
+            cursor: analysisResult ? 'pointer' : 'not-allowed',
+            opacity: analysisResult ? 1 : 0.6,
+            transition: 'opacity 0.2s',
+          }}
+        >
+          ⬇️ Export Annotated PDF
+        </button>
       </main>
-
-      {/* Footer */}
-      <footer style={{
-        width: '100%',
-        textAlign: 'center',
-        padding: '1.5rem 0 1rem 0',
-        color: '#a1a1aa',
-        fontSize: '1rem',
-        letterSpacing: '0.01em',
-        borderTop: '1px solid #23272f',
-        marginTop: 'auto',
-        background: 'rgba(24,24,27,0.95)',
-      }}>
-        <span>Made for educators • {new Date().getFullYear()} • <a href="https://ai.google.dev/gemini-api/docs" style={{ color: '#818cf8', textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">Gemini API</a></span>
+      <footer style={{ color: '#a5b4fc', fontSize: '0.98rem', marginTop: 16 }}>
+        &copy; {new Date().getFullYear()} Assignment AI Vulnerability Analyzer. All rights reserved.
       </footer>
     </div>
   );

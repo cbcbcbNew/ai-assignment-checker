@@ -1,7 +1,6 @@
 import express from 'express';
 import formidable from 'formidable';
 import fs from 'fs';
-import mammoth from 'mammoth';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -22,14 +21,8 @@ app.post('/api/extract', (req, res) => {
     const ext = file.originalFilename.split('.').pop().toLowerCase();
     if (ext === 'txt') {
       assignmentText = fs.readFileSync(file.filepath, 'utf-8');
-    } else if (ext === 'pdf') {
-      assignmentText = '(PDF extraction not supported on server. Please convert to text first.)';
-    } else if (ext === 'docx') {
-      const dataBuffer = fs.readFileSync(file.filepath);
-      const result = await mammoth.extractRawText({ buffer: dataBuffer });
-      assignmentText = result.value;
     } else {
-      assignmentText = '(Unsupported file type)';
+      assignmentText = '(Unsupported file type. Only .txt files are supported in this version.)';
     }
     res.json({ text: assignmentText });
   });
@@ -46,14 +39,8 @@ app.post('/api/analyze', (req, res) => {
       const ext = file.originalFilename.split('.').pop().toLowerCase();
       if (ext === 'txt') {
         assignmentText = fs.readFileSync(file.filepath, 'utf-8');
-      } else if (ext === 'pdf') {
-        assignmentText = '(PDF extraction not supported on server. Please convert to text first.)';
-      } else if (ext === 'docx') {
-        const dataBuffer = fs.readFileSync(file.filepath);
-        const result = await mammoth.extractRawText({ buffer: dataBuffer });
-        assignmentText = result.value;
       } else {
-        assignmentText = '(Unsupported file type)';
+        assignmentText = '(Unsupported file type. Only .txt files are supported in this version.)';
       }
     } else if (fields.text) {
       assignmentText = fields.text;
