@@ -1,7 +1,7 @@
 import express from 'express';
 import formidable from 'formidable';
 import fs from 'fs';
-import * as pdfjsLib from 'pdfjs-dist/cjs/build/pdf.js';
+import * as pdfjsLib from 'pdfjs-dist/esm/build/pdf.js';
 import mammoth from 'mammoth';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
