@@ -1,7 +1,10 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite",
+  "version": 2,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "vercel/node@20.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
