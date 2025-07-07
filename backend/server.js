@@ -1,7 +1,7 @@
 import express from 'express';
 import formidable from 'formidable';
 import fs from 'fs';
-import pdfParse from 'pdf-parse';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import mammoth from 'mammoth';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -11,6 +11,18 @@ const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+
+async function extractPdfText(filePath) {
+  const data = new Uint8Array(fs.readFileSync(filePath));
+  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    text += content.items.map(item => item.str).join(' ') + '\n';
+  }
+  return text;
+}
 
 // /api/extract endpoint
 app.post('/api/extract', (req, res) => {
@@ -24,9 +36,7 @@ app.post('/api/extract', (req, res) => {
     if (ext === 'txt') {
       assignmentText = fs.readFileSync(file.filepath, 'utf-8');
     } else if (ext === 'pdf') {
-      const dataBuffer = fs.readFileSync(file.filepath);
-      const data = await pdfParse(dataBuffer);
-      assignmentText = data.text;
+      assignmentText = await extractPdfText(file.filepath);
     } else if (ext === 'docx') {
       const dataBuffer = fs.readFileSync(file.filepath);
       const result = await mammoth.extractRawText({ buffer: dataBuffer });
@@ -50,9 +60,7 @@ app.post('/api/analyze', (req, res) => {
       if (ext === 'txt') {
         assignmentText = fs.readFileSync(file.filepath, 'utf-8');
       } else if (ext === 'pdf') {
-        const dataBuffer = fs.readFileSync(file.filepath);
-        const data = await pdfParse(dataBuffer);
-        assignmentText = data.text;
+        assignmentText = await extractPdfText(file.filepath);
       } else if (ext === 'docx') {
         const dataBuffer = fs.readFileSync(file.filepath);
         const result = await mammoth.extractRawText({ buffer: dataBuffer });
