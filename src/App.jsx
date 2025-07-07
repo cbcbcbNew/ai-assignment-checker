@@ -11,31 +11,25 @@ function App() {
   const [loading, setLoading] = useState(false);
   const analysisRef = useRef();
 
+  // Extract text from file, using server for PDF/DOCX
   const extractTextFromFile = async (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
-    
     if (ext === 'txt') {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);
         reader.readAsText(file);
       });
-    } else if (ext === 'pdf') {
-      // For PDF, we'll use a simple text extraction
-      // In a production app, you might want to use a more robust PDF parser
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          // Simple text extraction - for better results, consider using pdf.js
-          const text = e.target.result.replace(/[^\x00-\x7F]/g, '').replace(/\s+/g, ' ');
-          resolve(text);
-        };
-        reader.readAsText(file);
+    } else if (ext === 'pdf' || ext === 'docx') {
+      // Upload to /api/extract for server-side extraction
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/extract', {
+        method: 'POST',
+        body: formData,
       });
-    } else if (ext === 'docx') {
-      // For DOCX, we'll return a placeholder
-      // In a production app, you'd want to use a proper DOCX parser
-      return Promise.resolve('(DOCX file content - please convert to text for better analysis)');
+      const data = await response.json();
+      return data.text || '(No text extracted)';
     } else {
       return Promise.resolve('(Unsupported file type)');
     }
@@ -46,7 +40,6 @@ function App() {
     if (file) {
       setSelectedFile(file);
       setPreviewText('(Extracting text for preview...)');
-      
       try {
         const extractedText = await extractTextFromFile(file);
         setPreviewText(extractedText);
@@ -59,21 +52,33 @@ function App() {
   const handleAnalyze = async (file) => {
     setLoading(true);
     setAnalysisResult("");
-    
     if (!file) return;
-    
+    const ext = file.name.split('.').pop().toLowerCase();
     try {
-      const extractedText = await extractTextFromFile(file);
-      
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: extractedText }),
-      });
-      
-      const data = await response.json();
+      let response, data;
+      if (ext === 'txt') {
+        const extractedText = await extractTextFromFile(file);
+        response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: extractedText }),
+        });
+      } else if (ext === 'pdf' || ext === 'docx') {
+        // Send file to /api/analyze for server-side extraction and analysis
+        const formData = new FormData();
+        formData.append('file', file);
+        response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData,
+        });
+      } else {
+        setAnalysisResult('(Unsupported file type)');
+        setLoading(false);
+        return;
+      }
+      data = await response.json();
       setAnalysisResult(data.result || "⚠️ No result returned");
     } catch (err) {
       setAnalysisResult("❌ Error during analysis.");
