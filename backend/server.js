@@ -1,5 +1,5 @@
 import express from 'express';
-import formidable from 'formidable';
+import { formidable } from 'formidable';
 import fs from 'fs';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -12,8 +12,7 @@ app.use(express.json());
 
 // /api/extract endpoint
 app.post('/api/extract', (req, res) => {
-  const form = new formidable.IncomingForm();
-  form.parse(req, async (err, fields, files) => {
+  formidable().parse(req, async (err, fields, files) => {
     if (err) return res.status(500).json({ text: '(Error parsing file)' });
     const file = files.file;
     if (!file) return res.status(400).json({ text: '(No file uploaded)' });
@@ -30,8 +29,7 @@ app.post('/api/extract', (req, res) => {
 
 // /api/analyze endpoint
 app.post('/api/analyze', (req, res) => {
-  const form = new formidable.IncomingForm();
-  form.parse(req, async (err, fields, files) => {
+  formidable().parse(req, async (err, fields, files) => {
     if (err) return res.status(500).json({ result: 'Error parsing file' });
     let assignmentText = '';
     if (files.file) {
