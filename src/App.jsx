@@ -3,6 +3,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import * as pdfjsLib from 'pdfjs-dist/build/pdf';
+import 'pdfjs-dist/build/pdf.worker.entry';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -11,7 +13,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const analysisRef = useRef();
 
-  // Extract text from file, using server for PDF/DOCX
+  // Extract text from file, all client-side
   const extractTextFromFile = async (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
     if (ext === 'txt') {
@@ -20,16 +22,30 @@ function App() {
         reader.onload = (e) => resolve(e.target.result);
         reader.readAsText(file);
       });
-    } else if (ext === 'pdf' || ext === 'docx') {
-      // Upload to /api/extract for server-side extraction
-      const formData = new FormData();
-      formData.append('file', file);
-      const response = await fetch('/api/extract', {
-        method: 'POST',
-        body: formData,
+    } else if (ext === 'pdf') {
+      // Use pdfjs-dist to extract text from PDF
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          try {
+            const typedarray = new Uint8Array(e.target.result);
+            const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+            let text = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              text += content.items.map(item => item.str).join(' ') + '\n';
+            }
+            resolve(text);
+          } catch (err) {
+            reject('(Error extracting PDF text)');
+          }
+        };
+        reader.readAsArrayBuffer(file);
       });
-      const data = await response.json();
-      return data.text || '(No text extracted)';
+    } else if (ext === 'docx') {
+      // DOCX extraction in browser is complex; show a message
+      return Promise.resolve('(DOCX preview not supported in browser. Please convert to .txt or .pdf for best results.)');
     } else {
       return Promise.resolve('(Unsupported file type)');
     }
@@ -53,32 +69,16 @@ function App() {
     setLoading(true);
     setAnalysisResult("");
     if (!file) return;
-    const ext = file.name.split('.').pop().toLowerCase();
     try {
-      let response, data;
-      if (ext === 'txt') {
-        const extractedText = await extractTextFromFile(file);
-        response = await fetch('/api/analyze', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ text: extractedText }),
-        });
-      } else if (ext === 'pdf' || ext === 'docx') {
-        // Send file to /api/analyze for server-side extraction and analysis
-        const formData = new FormData();
-        formData.append('file', file);
-        response = await fetch('/api/analyze', {
-          method: 'POST',
-          body: formData,
-        });
-      } else {
-        setAnalysisResult('(Unsupported file type)');
-        setLoading(false);
-        return;
-      }
-      data = await response.json();
+      const extractedText = await extractTextFromFile(file);
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: extractedText }),
+      });
+      const data = await response.json();
       setAnalysisResult(data.result || "⚠️ No result returned");
     } catch (err) {
       setAnalysisResult("❌ Error during analysis.");
