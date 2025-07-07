@@ -1,7 +1,6 @@
 import express from 'express';
 import formidable from 'formidable';
 import fs from 'fs';
-import * as pdfjsLib from 'pdfjs-dist/esm/build/pdf.js';
 import mammoth from 'mammoth';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -13,6 +12,8 @@ app.use(cors());
 app.use(express.json());
 
 async function extractPdfText(filePath) {
+  // Dynamic import to avoid module resolution issues
+  const pdfjsLib = await import('pdfjs-dist');
   const data = new Uint8Array(fs.readFileSync(filePath));
   const pdf = await pdfjsLib.getDocument({ data }).promise;
   let text = '';
