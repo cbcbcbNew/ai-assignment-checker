@@ -18,9 +18,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // For now, we'll accept text directly in the request body
-    // This is a simpler approach that works better with Vercel
-    const { text } = req.body;
+    // Parse JSON body
+    let body;
+    try {
+      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
+
+    const { text } = body;
     
     if (!text) {
       return res.status(400).json({ result: 'No text provided' });
