@@ -165,51 +165,7 @@ function App() {
     );
   }
 
-  // Show authentication forms if not logged in
-  if (!user) {
-    return (
-      <div style={{
-        minHeight: '100vh',
-        width: '100vw',
-        background: 'linear-gradient(135deg, #18181b 0%, #23272f 100%)',
-        color: '#f3f4f6',
-        fontFamily: 'Inter, system-ui, sans-serif',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        boxSizing: 'border-box',
-        padding: 0,
-      }}>
-        {/* Hero Section */}
-        <header style={{
-          width: '100%',
-          padding: '3rem 0 2rem 0',
-          textAlign: 'center',
-          background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
-          color: '#fff',
-          boxShadow: '0 2px 16px 0 rgba(0,0,0,0.08)',
-          marginBottom: '2rem',
-        }}>
-          <h1 style={{ fontSize: '2.8rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>
-            🧠 Assignment AI Vulnerability Analyzer
-          </h1>
-          <p style={{ fontSize: '1.25rem', fontWeight: 400, margin: '1rem auto 0', maxWidth: 600 }}>
-            Instantly assess how easily your assignment prompts can be solved by AI tools like Gemini or ChatGPT. Get actionable feedback to make your assignments more authentic and AI-resistant. Perfect for educators who want to stay ahead!
-          </p>
-        </header>
-
-        {/* Authentication Form */}
-        {showLogin ? (
-          <Login onSwitchToRegister={() => setShowLogin(false)} />
-        ) : (
-          <Register onSwitchToLogin={() => setShowLogin(true)} />
-        )}
-      </div>
-    );
-  }
-
-  // Main app interface for authenticated users
+  // Main app interface (analyzer always available)
   return (
     <div style={{
       minHeight: '100vh',
@@ -224,7 +180,7 @@ function App() {
       boxSizing: 'border-box',
       padding: 0,
     }}>
-      {/* Hero Section with User Info */}
+      {/* Hero Section with User Info or Auth Button */}
       <header style={{
         width: '100%',
         padding: '3rem 0 2rem 0',
@@ -235,7 +191,7 @@ function App() {
         marginBottom: '2rem',
         position: 'relative',
       }}>
-        {/* User Menu */}
+        {/* User Menu or Auth Button */}
         <div style={{
           position: 'absolute',
           top: '1rem',
@@ -244,24 +200,44 @@ function App() {
           alignItems: 'center',
           gap: '1rem',
         }}>
-          <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-            Welcome, {user.name || user.email}!
-          </span>
-          <button
-            onClick={logout}
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#fff',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: '6px',
-              padding: '0.5rem 1rem',
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            Logout
-          </button>
+          {user ? (
+            <>
+              <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                Welcome, {user.name || user.email}!
+              </span>
+              <button
+                onClick={logout}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#fff',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  borderRadius: '6px',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => setShowLogin((v) => !v)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#fff',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '6px',
+                padding: '0.5rem 1rem',
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {showLogin ? 'Close' : 'Login / Register'}
+            </button>
+          )}
         </div>
 
         <h1 style={{ fontSize: '2.8rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>
@@ -272,7 +248,28 @@ function App() {
         </p>
       </header>
 
-      {/* Upload & Preview Card */}
+      {/* Optional Auth UI (modal style) */}
+      {!user && showLogin && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          background: 'rgba(0,0,0,0.45)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{ zIndex: 1001 }}>
+            <Login onSwitchToRegister={() => setShowLogin(false)} />
+            <Register onSwitchToLogin={() => setShowLogin(true)} />
+          </div>
+        </div>
+      )}
+
+      {/* Upload & Preview Card (always available) */}
       <main style={{
         width: '100%',
         maxWidth: 700,
@@ -318,7 +315,7 @@ function App() {
         </button>
         <div style={{ marginBottom: 24 }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>
-            📝 Assignment Preview
+            �� Assignment Preview
           </h3>
           <div style={{
             background: '#18181b',
@@ -377,5 +374,5 @@ function App() {
     </div>
   );
 }
-
+console.log("test passed");
 export default App;

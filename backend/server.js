@@ -103,8 +103,8 @@ app.post('/api/extract', (req, res) => {
   });
 });
 
-// /api/analyze endpoint (accepts only JSON) - Protected with authentication
-app.post('/api/analyze', authenticateToken, async (req, res) => {
+// /api/analyze endpoint (accepts only JSON) - Now public
+app.post('/api/analyze', async (req, res) => {
   const assignmentText = req.body.text;
   if (!assignmentText) {
     return res.status(400).json({ result: 'No text provided' });
