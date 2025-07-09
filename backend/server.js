@@ -103,7 +103,8 @@ app.post('/api/extract', (req, res) => {
 
     // Defensive: log files and check for file
     console.log('Received files:', files);
-    const file = files.file;
+    let file = files.file;
+    if (Array.isArray(file)) file = file[0];
     if (!file || !file.originalFilename) {
       return res.status(400).json({ text: '(No file uploaded or filename missing)' });
     }
