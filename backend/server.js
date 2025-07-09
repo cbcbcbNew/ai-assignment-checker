@@ -100,8 +100,14 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 app.post('/api/extract', (req, res) => {
   formidable().parse(req, async (err, fields, files) => {
     if (err) return res.status(500).json({ text: '(Error parsing file)' });
+
+    // Defensive: log files and check for file
+    console.log('Received files:', files);
     const file = files.file;
-    if (!file) return res.status(400).json({ text: '(No file uploaded)' });
+    if (!file || !file.originalFilename) {
+      return res.status(400).json({ text: '(No file uploaded or filename missing)' });
+    }
+
     let assignmentText = '';
     const ext = file.originalFilename.split('.').pop().toLowerCase();
     try {
