@@ -16,7 +16,7 @@
     "jsonwebtoken": "^9.0.2",
     "mammoth": "^1.9.1",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^5.3.93",
+    "pdfjs-dist": "^3.11.174",
     "sqlite3": "^5.1.6"
   }
 }
