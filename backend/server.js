@@ -35,139 +35,65 @@ app.post('/api/analyze', async (req, res) => {
   }
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-  const prompt = `Prompt for AI Model: Assignment AI-Resilience Evaluator
+  const prompt = `Prompt for AI Model: Assignment AI-Resilience Evaluator (Aggregate Score)
 
-Role: You are an expert educational technologist specializing in AI-resilient assignment design. Your task is to analyze assignment descriptions for their vulnerability to AI-generated content and provide constructive feedback.
+Role: You are an expert educational technologist specializing in AI-resilient assignment design. Your task is to analyze assignment descriptions for their vulnerability to AI-generated content and provide constructive feedback, giving an overall assessment rather than a detailed numeric breakdown.
 
-Guidelines for Evaluation (for your reference and scoring):
+Core Principles for AI-Resilient Assignment Design (for your reference and evaluation):
 
-Prioritize Higher-Order Thinking and Authenticity (Score 0-2):
+Higher-Order Thinking & Authenticity: Does the assignment demand critical thinking, unique argumentation, synthesis, evaluation, or creative solutions that go beyond simple recall or summarization? Is it difficult for AI to generate truly original or insightful responses?
 
-0: Focuses solely on recall, summarization, or basic comprehension.
+Contextualization & Personalization: Does the assignment require students to integrate class-specific discussions, lectures, unique scenarios, or personal reflections that AI would struggle to fabricate convincingly?
 
-1: Requires some analysis or basic application, but easily mimicked by AI.
+Process & Revision Emphasis: Does the assignment build in stages (drafts, revisions, feedback loops) that reveal the student's learning process and make it harder to submit a single, AI-generated final product?
 
-2: Demands critical thinking, unique argumentation, synthesis, evaluation, or creative solutions beyond AI's current capabilities for originality.
+Integration of Multiple Data Sources & Modalities: Does the assignment require students to synthesize diverse, specific materials (e.g., unique datasets, case studies, lab results) and/or use different formats (written, oral, visual, computational) in a way that is challenging for AI to manage cohesively?
 
-Require Contextualization and Personalization (Score 0-2):
+Social & Collaborative Elements: Does the assignment include group work, peer review, or in-person components that introduce social accountability and reduce the incentive or opportunity for AI misuse?
 
-0: Generic; no requirement for personal reflection or class-specific integration.
+Integrity & Transparency Measures: Are there explicit measures (e.g., canary prompts, required AI disclosure, unique prompts) designed to deter AI use or make it detectable?
 
-1: Mildly requests some personalization, but still largely general.
-
-2: Explicitly requires referencing specific class discussions, lectures, shared experiences, or reflective components connecting to the student's unique learning/context.
-
-Emphasize Process and Revision (Score 0-2):
-
-0: Single, final submission only; no process documentation.
-
-1: Suggests process, but no mandatory submission of drafts or revision history.
-
-2: Requires submission of drafts, revision histories (e.g., tracked changes), reflections on feedback, or analysis of work changes.
-
-Integrate Multiple Data Sources and Modalities (Score 0-2):
-
-0: Relies on a single, easily accessible data source or just text.
-
-1: Uses multiple sources, but they are generic or limited in type.
-
-2: Requires synthesis of diverse, specific materials (e.g., datasets, case studies, lab results, class-generated data) and/or tasks spanning different formats (written, oral, visual, computational).
-
-Leverage Social and Collaborative Elements (Score 0-2):
-
-0: Fully individual work, no collaborative components.
-
-1: Optional or minor collaborative elements without strong accountability.
-
-2: Incorporates mandatory group projects, peer feedback, in-class presentations, or collaborative creation with clear individual contribution documentation.
-
-Embed Integrity and Transparency Measures (Score 0-2):
-
-0: No explicit integrity measures or AI disclosure requirements.
-
-1: General honor code, but no specific AI-deterring elements.
-
-2: Includes canary prompts, embedded instructions to detect AI use, or requires students to disclose and reflect on any AI tools used.
-
-Consider Handwriting and In-Person Assessment Where Appropriate (Score 0-2):
-
-0: Exclusively digital submission, no in-person component.
-
-1: Allows for digital submission with some potential for in-person discussion.
-
-2: Requires handwritten responses, in-person completion for high-stakes assessments, annotated scans, or hybrid formats that necessitate physical presence or original work.
+Leveraging Appropriate Modalities/In-Person Components: Does the assignment consider non-digital or in-person components (e.g., presentations, specific physical artifacts, in-class activities) that inherently reduce opportunities for AI use and foster direct engagement?
 
 Your Task:
 
 Present the Assignment Description: I will provide you with an assignment description.
 
-Score Each Guideline: For each of the seven guidelines above, assign a score from 0-2 based on how well the assignment description incorporates that principle. Provide a brief justification (1-2 sentences) for each score.
+Assess Overall AI-Resilience: Based on the degree to which the assignment incorporates the "Core Principles for AI-Resilient Assignment Design," determine its overall vulnerability to AI.
 
-Calculate Total Score: Sum the individual scores to get a total AI-Resilience Score.
+Provide an Aggregate Score: Assign one of the following aggregate resilience levels:
 
-Provide Interpretation: Based on the total score, categorize the assignment's AI-resilience using the following scale:
+Highly AI-Resilient: This assignment strongly integrates multiple principles, making it genuinely challenging for AI to complete convincingly.
 
-12–14: Highly AI-resilient
+Moderately AI-Resilient: This assignment incorporates some principles, but there are clear areas where AI could still be used to a significant degree, or where the design could be strengthened.
 
-8–11: Moderately resilient; consider adding more process/context
+Vulnerable to AI: This assignment aligns minimally with the principles and is highly susceptible to AI generation, potentially with little detectable trace.
 
-0–7: Vulnerable; significant redesign needed
-
-Offer Specific Feedback for Improvement: Provide actionable, concise recommendations for each guideline (even those scored 2, if there's room for enhancement) on how to further increase the assignment's AI-resilience and make it harder to cheat with AI. Be specific, drawing directly from the research basis and guidelines provided.
+Offer Specific Feedback for Improvement: For each of the "Core Principles," provide concrete, actionable recommendations on how the assignment could be modified to increase its resilience against AI, even if it already addresses the principle well. Be specific, explaining how the change would make it harder for AI to cheat effectively.
 
 Example Output Format (You should generate this):
 
 Assignment AI-Resilience Evaluation
 
-Scoring Breakdown:
-
-Prioritize Higher-Order Thinking and Authenticity: [Score]/2
-
-Justification: [Your justification]
-
-Require Contextualization and Personalization: [Score]/2
-
-Justification: [Your justification]
-
-Emphasize Process and Revision: [Score]/2
-
-Justification: [Your justification]
-
-Integrate Multiple Data Sources and Modalities: [Score]/2
-
-Justification: [Your justification]
-
-Leverage Social and Collaborative Elements: [Score]/2
-
-Justification: [Your justification]
-
-Embed Integrity and Transparency Measures: [Score]/2
-
-Justification: [Your justification]
-
-Consider Handwriting and In-Person Assessment Where Appropriate: [Score]/2
-
-Justification: [Your justification]
-
-Total AI-Resilience Score: [Sum of scores]/14
-
-Interpretation: [Your interpretation based on the total score]
+Overall AI-Resilience Assessment: [Your chosen aggregate score: Highly AI-Resilient, Moderately AI-Resilient, or Vulnerable to AI]
 
 Specific Feedback for Improvement:
 
-Prioritize Higher-Order Thinking and Authenticity: [Your specific recommendations]
+Higher-Order Thinking & Authenticity: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
 
-Require Contextualization and Personalization: [Your specific recommendations]
+Contextualization & Personalization: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
 
-Emphasize Process and Revision: [Your specific recommendations]
+Process & Revision Emphasis: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
 
-Integrate Multiple Data Sources and Modalities: [Your specific recommendations]
+Integration of Multiple Data Sources & Modalities: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
 
-Leverage Social and Collaborative Elements: [Your specific recommendations]
+Social & Collaborative Elements: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
 
-Embed Integrity and Transparency Measures: [Your specific recommendations]
+Integrity & Transparency Measures: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
 
-Consider Handwriting and In-Person Assessment Where Appropriate: [Your specific recommendations]
+Leveraging Appropriate Modalities/In-Person Components: [Your specific recommendations on how to enhance this aspect, making it harder for AI]
+
+
 
 :\n\n${assignmentText}`;
   try {
