@@ -100,9 +100,13 @@ app.post('/api/extract', (req, res) => {
       if (ext === 'txt') {
         assignmentText = fs.readFileSync(file.filepath, 'utf-8');
       } else if (ext === 'pdf') {
-        const dataBuffer = fs.readFileSync(file.filepath);
-        const pdfData = await pdfParse(dataBuffer);
-        assignmentText = pdfData.text;
+        try {
+          const dataBuffer = fs.readFileSync(file.filepath);
+          const pdfData = await pdfParse(dataBuffer);
+          assignmentText = pdfData.text;
+        } catch (pdfErr) {
+          assignmentText = '(Error extracting PDF text: ' + pdfErr.message + ')';
+        }
       } else if (ext === 'docx') {
         const dataBuffer = fs.readFileSync(file.filepath);
         const result = await mammoth.extractRawText({ buffer: dataBuffer });
