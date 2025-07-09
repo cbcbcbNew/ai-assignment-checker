@@ -32,14 +32,22 @@ function App() {
     }
   };
 
+  // Accept .txt, .pdf, .docx
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedFile(file);
       setPreviewText('(Extracting text for preview...)');
       try {
-        const extractedText = await extractTextFromFile(file);
-        setPreviewText(extractedText);
+        // Send file to backend for extraction
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`${API_BASE}/api/extract`, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await response.json();
+        setPreviewText(data.text || '(No text extracted)');
       } catch (err) {
         setPreviewText('(Error extracting text)');
       }
@@ -51,12 +59,13 @@ function App() {
     setAnalysisResult("");
     if (!file) return;
     try {
-      const extractedText = await extractTextFromFile(file);
+      // Use previewText as the extracted text
+      const extractedText = previewText;
       const response = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ text: extractedText }),
       });
@@ -368,7 +377,7 @@ function App() {
         </span>
         <input
           type="file"
-          accept=".txt"
+          accept=".txt,.pdf,.docx"
           onChange={handleFileChange}
           style={{ marginBottom: 18 }}
         />

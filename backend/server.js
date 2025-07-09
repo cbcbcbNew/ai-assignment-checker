@@ -5,6 +5,8 @@ import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateToken, comparePassword, authenticateToken } from './auth.js';
 import { initDatabase, createUser, getUserByEmail, getUserById } from './database.js';
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -86,7 +88,7 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
-// /api/extract endpoint (still supports file upload for .txt)
+// /api/extract endpoint (supports .txt, .pdf, .docx)
 app.post('/api/extract', (req, res) => {
   formidable().parse(req, async (err, fields, files) => {
     if (err) return res.status(500).json({ text: '(Error parsing file)' });
@@ -94,10 +96,22 @@ app.post('/api/extract', (req, res) => {
     if (!file) return res.status(400).json({ text: '(No file uploaded)' });
     let assignmentText = '';
     const ext = file.originalFilename.split('.').pop().toLowerCase();
-    if (ext === 'txt') {
-      assignmentText = fs.readFileSync(file.filepath, 'utf-8');
-    } else {
-      assignmentText = '(Unsupported file type. Only .txt files are supported in this version.)';
+    try {
+      if (ext === 'txt') {
+        assignmentText = fs.readFileSync(file.filepath, 'utf-8');
+      } else if (ext === 'pdf') {
+        const dataBuffer = fs.readFileSync(file.filepath);
+        const pdfData = await pdfParse(dataBuffer);
+        assignmentText = pdfData.text;
+      } else if (ext === 'docx') {
+        const dataBuffer = fs.readFileSync(file.filepath);
+        const result = await mammoth.extractRawText({ buffer: dataBuffer });
+        assignmentText = result.value;
+      } else {
+        assignmentText = '(Unsupported file type. Only .txt, .pdf, and .docx files are supported.)';
+      }
+    } catch (e) {
+      assignmentText = '(Error extracting text: ' + e.message + ')';
     }
     res.json({ text: assignmentText });
   });
