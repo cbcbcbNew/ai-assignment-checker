@@ -5,7 +5,7 @@ import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateToken, comparePassword, authenticateToken } from './auth.js';
 import { initDatabase, createUser, getUserByEmail, getUserById } from './database.js';
-import { getDocument } from 'pdfjs-dist';
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import mammoth from 'mammoth';
 
 const app = express();
@@ -102,8 +102,8 @@ app.post('/api/extract', (req, res) => {
       } else if (ext === 'pdf') {
         try {
           const dataBuffer = fs.readFileSync(file.filepath);
-          // Use pdfjs-dist to extract text
-          const loadingTask = getDocument({ data: dataBuffer });
+          // Use pdfjs-dist legacy build to extract text
+          const loadingTask = pdfjsLib.getDocument({ data: dataBuffer });
           const pdf = await loadingTask.promise;
           let text = '';
           for (let i = 1; i <= pdf.numPages; i++) {
