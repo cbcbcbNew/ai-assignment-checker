@@ -11,7 +11,15 @@ import mammoth from 'mammoth';
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-app.use(cors());
+const allowedOrigins = [
+  'https://ai-assignment-checker.vercel.app',
+  'http://localhost:5173',
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 app.use(express.json());
 
 // Initialize database
