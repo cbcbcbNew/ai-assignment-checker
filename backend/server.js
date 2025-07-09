@@ -37,7 +37,7 @@ app.post('/api/analyze', async (req, res) => {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
   const prompt = `Prompt for AI Model: Assignment AI-Resilience Evaluator (Aggregate Score)
 
-Role: You are an expert educational technologist specializing in AI-resilient assignment design. Your task is to analyze assignment descriptions for their vulnerability to AI-generated content and provide constructive feedback, giving an overall assessment rather than a detailed numeric breakdown.
+Role: You are an expert educational technologist specializing in AI-resilient assignment design. Your task is to analyze assignment descriptions for their vulnerability to AI-generated content and provide constructive feedback, giving an overall assessment with specific recommendations for improvement.
 
 Core Principles for AI-Resilient Assignment Design (for your reference and evaluation):
 
@@ -61,13 +61,11 @@ Present the Assignment Description: I will provide you with an assignment descri
 
 Assess Overall AI-Resilience: Based on the degree to which the assignment incorporates the "Core Principles for AI-Resilient Assignment Design," determine its overall vulnerability to AI.
 
-Provide an Aggregate Score: Assign one of the following aggregate resilience levels:
+Provide an Aggregate Score from 1 to 10 on a decimal scale where 10 is 
 
 Highly AI-Resilient: This assignment strongly integrates multiple principles, making it genuinely challenging for AI to complete convincingly.
 
-Moderately AI-Resilient: This assignment incorporates some principles, but there are clear areas where AI could still be used to a significant degree, or where the design could be strengthened.
-
-Vulnerable to AI: This assignment aligns minimally with the principles and is highly susceptible to AI generation, potentially with little detectable trace.
+and 1 is something i could toss in ChatGPT and immediately yield the exact desired result. 
 
 Offer Specific Feedback for Improvement: For each of the "Core Principles," provide concrete, actionable recommendations on how the assignment could be modified to increase its resilience against AI, even if it already addresses the principle well. Be specific, explaining how the change would make it harder for AI to cheat effectively.
 
