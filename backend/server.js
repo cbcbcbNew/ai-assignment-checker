@@ -5,7 +5,7 @@ import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateToken, comparePassword, authenticateToken } from './auth.js';
 import { initDatabase, createUser, getUserByEmail, getUserById } from './database.js';
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
+import pdfjsLib from 'pdfjs-dist/legacy/build/pdf.js';
 import mammoth from 'mammoth';
 
 const app = express();
