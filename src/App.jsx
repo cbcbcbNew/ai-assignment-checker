@@ -248,7 +248,7 @@ function App() {
       </header>
 
       {/* Sleek Auth Modal */}
-      {authModal && (
+      {authModal && !user && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -296,7 +296,7 @@ function App() {
             {/* Auth form */}
             {authModal === 'login' ? (
               <>
-                <Login onSwitchToRegister={() => setAuthModal('register')} />
+                <Login onSwitchToRegister={() => setAuthModal('register')} onSuccess={() => setAuthModal(null)} />
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
                   <span style={{ color: '#a5b4fc', fontSize: '0.98rem' }}>
                     Don&apos;t have an account?{' '}
@@ -320,7 +320,7 @@ function App() {
               </>
             ) : (
               <>
-                <Register onSwitchToLogin={() => setAuthModal('login')} />
+                <Register onSwitchToLogin={() => setAuthModal('login')} onSuccess={() => setAuthModal(null)} />
                 <div style={{ textAlign: 'center', marginTop: 12 }}>
                   <span style={{ color: '#a5b4fc', fontSize: '0.98rem' }}>
                     Already have an account?{' '}

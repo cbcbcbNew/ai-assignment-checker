@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 
-const Register = ({ onSwitchToLogin }) => {
+const Register = ({ onSwitchToLogin, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -39,6 +39,9 @@ const Register = ({ onSwitchToLogin }) => {
     
     if (!result.success) {
       setError(result.error);
+    } else {
+      setError('');
+      if (onSuccess) onSuccess();
     }
     
     setLoading(false);

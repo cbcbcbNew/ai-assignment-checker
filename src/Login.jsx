@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 
-const Login = ({ onSwitchToRegister }) => {
+const Login = ({ onSwitchToRegister, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,6 +17,9 @@ const Login = ({ onSwitchToRegister }) => {
     
     if (!result.success) {
       setError(result.error);
+    } else {
+      setError('');
+      if (onSuccess) onSuccess();
     }
     
     setLoading(false);
