@@ -13,7 +13,8 @@ function App() {
   const [previewText, setPreviewText] = useState('');
   const [analysisResult, setAnalysisResult] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showLogin, setShowLogin] = useState(true);
+  // Modal state: 'login', 'register', or null
+  const [authModal, setAuthModal] = useState(null);
   const analysisRef = useRef();
   const { user, token, logout, loading: authLoading } = useAuth();
 
@@ -180,7 +181,7 @@ function App() {
       boxSizing: 'border-box',
       padding: 0,
     }}>
-      {/* Hero Section with User Info or Auth Button */}
+      {/* Header with Auth Button */}
       <header style={{
         width: '100%',
         padding: '3rem 0 2rem 0',
@@ -191,7 +192,6 @@ function App() {
         marginBottom: '2rem',
         position: 'relative',
       }}>
-        {/* User Menu or Auth Button */}
         <div style={{
           position: 'absolute',
           top: '1rem',
@@ -223,7 +223,7 @@ function App() {
             </>
           ) : (
             <button
-              onClick={() => setShowLogin((v) => !v)}
+              onClick={() => setAuthModal('login')}
               style={{
                 background: 'rgba(255, 255, 255, 0.1)',
                 color: '#fff',
@@ -235,11 +235,10 @@ function App() {
                 transition: 'all 0.2s ease'
               }}
             >
-              {showLogin ? 'Close' : 'Login / Register'}
+              Login / Register
             </button>
           )}
         </div>
-
         <h1 style={{ fontSize: '2.8rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>
           🧠 Assignment AI Vulnerability Analyzer
         </h1>
@@ -248,8 +247,8 @@ function App() {
         </p>
       </header>
 
-      {/* Optional Auth UI (modal style) */}
-      {!user && showLogin && (
+      {/* Sleek Auth Modal */}
+      {authModal && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -262,9 +261,88 @@ function App() {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <div style={{ zIndex: 1001 }}>
-            <Login onSwitchToRegister={() => setShowLogin(false)} />
-            <Register onSwitchToLogin={() => setShowLogin(true)} />
+          <div style={{
+            background: 'rgba(36, 37, 46, 0.98)',
+            borderRadius: '18px',
+            boxShadow: '0 8px 40px 0 rgba(0,0,0,0.25)',
+            padding: '2.5rem 2rem 2rem 2rem',
+            minWidth: 340,
+            maxWidth: '90vw',
+            position: 'relative',
+            zIndex: 1001,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+          }}>
+            {/* Close button */}
+            <button
+              onClick={() => setAuthModal(null)}
+              style={{
+                position: 'absolute',
+                top: 18,
+                right: 18,
+                background: 'none',
+                border: 'none',
+                color: '#a5b4fc',
+                fontSize: '1.5rem',
+                cursor: 'pointer',
+                fontWeight: 700,
+                zIndex: 1002
+              }}
+              aria-label="Close auth modal"
+            >
+              ×
+            </button>
+            {/* Auth form */}
+            {authModal === 'login' ? (
+              <>
+                <Login onSwitchToRegister={() => setAuthModal('register')} />
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <span style={{ color: '#a5b4fc', fontSize: '0.98rem' }}>
+                    Don&apos;t have an account?{' '}
+                    <button
+                      onClick={() => setAuthModal('register')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#818cf8',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        fontWeight: 600,
+                        fontSize: '0.98rem',
+                        padding: 0
+                      }}
+                    >
+                      Sign up
+                    </button>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <Register onSwitchToLogin={() => setAuthModal('login')} />
+                <div style={{ textAlign: 'center', marginTop: 12 }}>
+                  <span style={{ color: '#a5b4fc', fontSize: '0.98rem' }}>
+                    Already have an account?{' '}
+                    <button
+                      onClick={() => setAuthModal('login')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#818cf8',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        fontWeight: 600,
+                        fontSize: '0.98rem',
+                        padding: 0
+                      }}
+                    >
+                      Sign in
+                    </button>
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
