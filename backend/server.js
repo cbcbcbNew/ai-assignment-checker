@@ -117,8 +117,9 @@ app.post('/api/extract', (req, res) => {
       } else if (ext === 'pdf') {
         try {
           const dataBuffer = fs.readFileSync(file.filepath);
+          const uint8Array = new Uint8Array(dataBuffer);
           // Use pdfjs-dist legacy build to extract text
-          const loadingTask = pdfjsLib.getDocument({ data: dataBuffer });
+          const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
           const pdf = await loadingTask.promise;
           let text = '';
           for (let i = 1; i <= pdf.numPages; i++) {
