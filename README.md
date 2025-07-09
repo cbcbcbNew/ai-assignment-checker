@@ -1,21 +1,84 @@
 # AI Assignment Vulnerability Analyzer
 
-## Deployment: Render (Backend) + Vercel (Frontend)
+A React application that analyzes assignment prompts for AI vulnerability using Google's Gemini API. The app helps educators assess how easily their assignments can be solved by AI tools and provides actionable feedback to make assignments more authentic and AI-resistant.
+
+## Features
+
+- 🔐 **User Authentication** - Secure login and registration system
+- 📄 Support for .txt files (PDF and DOCX support coming soon)
+- 🧠 AI-powered vulnerability analysis using Gemini API
+- 📊 Risk assessment with detailed scoring
+- 💡 Actionable improvement suggestions
+- 📱 Modern, responsive UI
+- 📄 PDF export functionality
+- 🔒 Protected API endpoints
+
+## Authentication System
+
+The application now includes a complete user authentication system:
+
+- **User Registration**: Create new accounts with email and password
+- **User Login**: Secure authentication with JWT tokens
+- **Protected Routes**: Analysis features require authentication
+- **Session Management**: Automatic token refresh and logout
+- **Database Storage**: SQLite database for user management
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Google Gemini API key
+
+### Setup
+
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd ai-assignment-checker
+```
+
+2. Install dependencies:
+```bash
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd backend && npm install && cd ..
+```
+
+3. Set up environment variables:
+Create a `.env` file in the backend directory:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+JWT_SECRET=your_jwt_secret_key_here
+```
+
+4. Start the development servers:
+```bash
+# Start backend (in one terminal)
+cd backend && npm start
+
+# Start frontend (in another terminal)
+npm run dev
+```
+
+The app will be available at `http://localhost:5173` and the backend at `http://localhost:8080`
+
+## Deployment
 
 ### Backend (Render)
 1. Deploy the `backend/` folder as a Node.js web service on [Render](https://render.com/).
-2. Set the environment variable `GEMINI_API_KEY` in Render.
+2. Set the environment variables:
+   - `GEMINI_API_KEY`: Your Google Gemini API key
+   - `JWT_SECRET`: A secure random string for JWT signing
 3. The backend will be available at `https://your-backend.onrender.com` (or similar).
 
 ### Frontend (Vercel)
 1. Deploy the root project (React/Vite) to [Vercel](https://vercel.com/).
 2. Set the environment variable `VITE_API_BASE_URL` to your Render backend URL (e.g., `https://your-backend.onrender.com`).
 3. All API calls will be routed to your backend.
-
-### Local Development
-- Start the backend: `cd backend && npm install && npm start`
-- Start the frontend: `npm install && npm run dev`
-- By default, the frontend will use `http://localhost:8080` for API calls.
 
 ---
 
@@ -99,10 +162,16 @@ Make sure to set the following environment variable in your Vercel project:
 
 ### API Routes
 
-The application includes two API routes:
+The application includes the following API routes:
 
-- `/api/analyze` - Analyzes assignment text for AI vulnerability
-- `/api/extract` - Extracts text from uploaded files (simplified for Vercel)
+**Authentication Endpoints:**
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login user
+- `GET /api/auth/me` - Get current user profile (protected)
+
+**Analysis Endpoints:**
+- `POST /api/analyze` - Analyzes assignment text for AI vulnerability (protected)
+- `POST /api/extract` - Extracts text from uploaded files (simplified for Vercel)
 
 ## File Support
 

@@ -3,12 +3,88 @@ import { formidable } from 'formidable';
 import fs from 'fs';
 import cors from 'cors';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateToken, comparePassword, authenticateToken } from './auth.js';
+import { initDatabase, createUser, getUserByEmail, getUserById } from './database.js';
 
 const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.json());
+
+// Initialize database
+initDatabase().catch(console.error);
+
+// Authentication endpoints
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    const user = await createUser(email, password, name);
+    const token = generateToken(user.id);
+    
+    res.status(201).json({
+      message: 'User created successfully',
+      user: { id: user.id, email: user.email, name: user.name },
+      token
+    });
+  } catch (error) {
+    if (error.message === 'Email already exists') {
+      return res.status(409).json({ error: 'Email already exists' });
+    }
+    res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+    
+    const user = await getUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const isValidPassword = await comparePassword(password, user.password);
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const token = generateToken(user.id);
+    
+    res.json({
+      message: 'Login successful',
+      user: { id: user.id, email: user.email, name: user.name },
+      token
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.get('/api/auth/me', authenticateToken, async (req, res) => {
+  try {
+    const user = await getUserById(req.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to get user profile' });
+  }
+});
 
 // /api/extract endpoint (still supports file upload for .txt)
 app.post('/api/extract', (req, res) => {
@@ -27,8 +103,8 @@ app.post('/api/extract', (req, res) => {
   });
 });
 
-// /api/analyze endpoint (accepts only JSON)
-app.post('/api/analyze', async (req, res) => {
+// /api/analyze endpoint (accepts only JSON) - Protected with authentication
+app.post('/api/analyze', authenticateToken, async (req, res) => {
   const assignmentText = req.body.text;
   if (!assignmentText) {
     return res.status(400).json({ result: 'No text provided' });

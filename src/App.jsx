@@ -4,13 +4,18 @@ import remarkGfm from 'remark-gfm';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import API_BASE from './apiBase';
+import { useAuth } from './AuthContext';
+import Login from './Login';
+import Register from './Register';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewText, setPreviewText] = useState('');
   const [analysisResult, setAnalysisResult] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showLogin, setShowLogin] = useState(true);
   const analysisRef = useRef();
+  const { user, token, logout, loading: authLoading } = useAuth();
 
   // Extract text from file, only .txt supported
   const extractTextFromFile = async (file) => {
@@ -50,9 +55,16 @@ function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ text: extractedText }),
       });
+      
+      if (response.status === 401) {
+        setAnalysisResult("❌ Please log in to use this feature.");
+        return;
+      }
+      
       const data = await response.json();
       setAnalysisResult(data.result || "⚠️ No result returned");
     } catch (err) {
@@ -132,6 +144,72 @@ function App() {
     pdf.save('ai-analysis.pdf');
   };
 
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        width: '100vw',
+        background: 'linear-gradient(135deg, #18181b 0%, #23272f 100%)',
+        color: '#f3f4f6',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔄</div>
+          <div>Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication forms if not logged in
+  if (!user) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        width: '100vw',
+        background: 'linear-gradient(135deg, #18181b 0%, #23272f 100%)',
+        color: '#f3f4f6',
+        fontFamily: 'Inter, system-ui, sans-serif',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+        boxSizing: 'border-box',
+        padding: 0,
+      }}>
+        {/* Hero Section */}
+        <header style={{
+          width: '100%',
+          padding: '3rem 0 2rem 0',
+          textAlign: 'center',
+          background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
+          color: '#fff',
+          boxShadow: '0 2px 16px 0 rgba(0,0,0,0.08)',
+          marginBottom: '2rem',
+        }}>
+          <h1 style={{ fontSize: '2.8rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>
+            🧠 Assignment AI Vulnerability Analyzer
+          </h1>
+          <p style={{ fontSize: '1.25rem', fontWeight: 400, margin: '1rem auto 0', maxWidth: 600 }}>
+            Instantly assess how easily your assignment prompts can be solved by AI tools like Gemini or ChatGPT. Get actionable feedback to make your assignments more authentic and AI-resistant. Perfect for educators who want to stay ahead!
+          </p>
+        </header>
+
+        {/* Authentication Form */}
+        {showLogin ? (
+          <Login onSwitchToRegister={() => setShowLogin(false)} />
+        ) : (
+          <Register onSwitchToLogin={() => setShowLogin(true)} />
+        )}
+      </div>
+    );
+  }
+
+  // Main app interface for authenticated users
   return (
     <div style={{
       minHeight: '100vh',
@@ -146,7 +224,7 @@ function App() {
       boxSizing: 'border-box',
       padding: 0,
     }}>
-      {/* Hero Section */}
+      {/* Hero Section with User Info */}
       <header style={{
         width: '100%',
         padding: '3rem 0 2rem 0',
@@ -155,7 +233,37 @@ function App() {
         color: '#fff',
         boxShadow: '0 2px 16px 0 rgba(0,0,0,0.08)',
         marginBottom: '2rem',
+        position: 'relative',
       }}>
+        {/* User Menu */}
+        <div style={{
+          position: 'absolute',
+          top: '1rem',
+          right: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+        }}>
+          <span style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+            Welcome, {user.name || user.email}!
+          </span>
+          <button
+            onClick={logout}
+            style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '6px',
+              padding: '0.5rem 1rem',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Logout
+          </button>
+        </div>
+
         <h1 style={{ fontSize: '2.8rem', fontWeight: 800, margin: 0, letterSpacing: '-1px' }}>
           🧠 Assignment AI Vulnerability Analyzer
         </h1>
