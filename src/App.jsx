@@ -8,6 +8,7 @@ import { useAuth } from './AuthContext';
 import Login from './Login';
 import Register from './Register';
 import { v4 as uuidv4 } from 'uuid';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -166,6 +167,40 @@ function App() {
   // Utility: Encode a string with zero-width spaces between each character
   const encodeWithZeroWidth = (str) => str.split('').join('\u200B');
 
+  // Utility: Inject canary into PDF as invisible text
+  const injectCanaryIntoPDF = async (file) => {
+    const canary = generateCanaryPrompt();
+    setCanaryPrompt(canary);
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    const pages = pdfDoc.getPages();
+    if (pages.length === 0) return null;
+    // Pick a random page
+    const pageIndex = Math.floor(Math.random() * pages.length);
+    const page = pages[pageIndex];
+    // Load a standard font
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    // Pick a random position (off the visible page, or tiny font/white color)
+    const { width, height } = page.getSize();
+    // Option 1: Off-page (most robust)
+    const x = width + 50;
+    const y = height + 50;
+    // Option 2: Tiny font, white color, random spot
+    // const x = Math.random() * (width - 10) + 5;
+    // const y = Math.random() * (height - 10) + 5;
+    // Add the canary text (off-page, so invisible)
+    page.drawText(canary, {
+      x,
+      y,
+      size: 8, // Tiny font
+      font,
+      color: rgb(1, 1, 1), // White
+      opacity: 0.01, // Nearly invisible
+    });
+    const pdfBytes = await pdfDoc.save();
+    return pdfBytes;
+  };
+
   // Inject canary prompt at a random spot in the text, using zero-width encoding
   const injectCanaryIntoText = (text) => {
     const canary = generateCanaryPrompt();
@@ -184,23 +219,40 @@ function App() {
     return newLines.join('');
   };
 
-  // Handle canary injection and download for .txt
-  const handleInjectCanaryAndDownload = () => {
-    if (!selectedFile || !previewText || selectedFile.name.split('.').pop().toLowerCase() !== 'txt') return;
-    const injected = injectCanaryIntoText(previewText);
-    setCanaryInjectedText(injected);
-    // Trigger download
-    const blob = new Blob([injected], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = selectedFile.name.replace(/\.txt$/, '_canary.txt');
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 100);
+  // Handle canary injection and download for .txt and .pdf
+  const handleInjectCanaryAndDownload = async () => {
+    if (!selectedFile || !previewText) return;
+    const ext = selectedFile.name.split('.').pop().toLowerCase();
+    if (ext === 'txt') {
+      const injected = injectCanaryIntoText(previewText);
+      setCanaryInjectedText(injected);
+      // Trigger download
+      const blob = new Blob([injected], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = selectedFile.name.replace(/\.txt$/, '_canary.txt');
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } else if (ext === 'pdf') {
+      const pdfBytes = await injectCanaryIntoPDF(selectedFile);
+      if (!pdfBytes) return;
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = selectedFile.name.replace(/\.pdf$/, '_canary.pdf');
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    }
   };
 
   // Show loading screen while checking authentication
@@ -503,10 +555,10 @@ function App() {
         >
           ⬇️ Export Annotated PDF
         </button>
-        {/* Canary injection for .txt files */}
+        {/* Canary injection for .txt and .pdf files */}
         <button
           onClick={handleInjectCanaryAndDownload}
-          disabled={!selectedFile || selectedFile.name.split('.').pop().toLowerCase() !== 'txt' || !previewText}
+          disabled={!selectedFile || !['txt', 'pdf'].includes(selectedFile.name.split('.').pop().toLowerCase()) || !previewText}
           style={{
             background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)',
             color: '#fff',
@@ -516,12 +568,12 @@ function App() {
             borderRadius: 8,
             padding: '0.7rem 0',
             marginTop: 12,
-            cursor: (!selectedFile || selectedFile.name.split('.').pop().toLowerCase() !== 'txt' || !previewText) ? 'not-allowed' : 'pointer',
-            opacity: (!selectedFile || selectedFile.name.split('.').pop().toLowerCase() !== 'txt' || !previewText) ? 0.6 : 1,
+            cursor: (!selectedFile || !['txt', 'pdf'].includes(selectedFile.name.split('.').pop().toLowerCase()) || !previewText) ? 'not-allowed' : 'pointer',
+            opacity: (!selectedFile || !['txt', 'pdf'].includes(selectedFile.name.split('.').pop().toLowerCase()) || !previewText) ? 0.6 : 1,
             transition: 'opacity 0.2s',
           }}
         >
-          🕵️ Inject Canary Prompt & Download (.txt)
+          🕵️ Inject Canary Prompt & Download (.txt/.pdf)
         </button>
       </main>
       <footer style={{ color: '#a5b4fc', fontSize: '0.98rem', marginTop: 16 }}>
