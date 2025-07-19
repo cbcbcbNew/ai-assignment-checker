@@ -474,7 +474,7 @@ function App() {
           Upload Assignment Prompt (.txt only)
         </label>
         <span style={{ fontSize: '0.98rem', color: '#a5b4fc', marginBottom: 16 }}>
-          <b>.txt</b> files only. Instantly preview and analyze your prompt. PDF and DOCX support coming soon!
+          <b>Instantly preview and analyze your prompt. </b> 
         </span>
         <input
           type="file"
